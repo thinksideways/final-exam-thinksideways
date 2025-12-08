@@ -67,6 +67,7 @@ public class GameEngine
             .Include(p => p.Room)
             .Include(p => p.Equipment)
             .Include(p => p.Abilities)
+            .Where(p => p.Id.Equals(2))
             .FirstOrDefault();
 
         if (_currentPlayer == null)
@@ -149,10 +150,10 @@ public class GameEngine
                 HandleActionResult(_playerService.ShowCharacterStats(_currentPlayer));
                 break;
             case "Attack Monster":
-                HandleActionResult(_playerService.AttackMonster());
+                HandleActionResult(_playerService.AttackMonster(_currentPlayer, _currentRoom.Monsters));
                 break;
             case "Use Ability":
-                HandleActionResult(_playerService.UseAbilityOnMonster());
+                HandleActionResult(_playerService.UseAbilityOnMonster(_currentPlayer, _currentRoom.Monsters));
                 break;
             case "Return to Main Menu":
                 _currentMode = GameMode.Admin;

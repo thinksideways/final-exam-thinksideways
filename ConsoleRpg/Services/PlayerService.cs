@@ -1,6 +1,9 @@
 using ConsoleRpg.Models;
 using ConsoleRpgEntities.Data;
+using ConsoleRpgEntities.Models.Abilities.PlayerAbilities;
 using ConsoleRpgEntities.Models.Characters;
+using ConsoleRpgEntities.Models.Characters.Monsters;
+using ConsoleRpgEntities.Models.Equipments;
 using ConsoleRpgEntities.Models.Rooms;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -129,24 +132,117 @@ public class PlayerService
     /// <summary>
     /// TODO: Implement monster attack logic
     /// </summary>
-    public ServiceResult AttackMonster()
+    public ServiceResult AttackMonster(Player player, ICollection<Monster> monsters)
     {
         _logger.LogInformation("Attack monster feature called (not yet implemented)");
+
+        // Check if the player even has any damaging equipment (ie: a weapon)
+        if (player.Equipment is Equipment equipment && equipment.Weapon is Item weapon)
+        {
+            // Use weapon on each monster in the room
+            foreach (Monster monster in monsters)
+            {
+                Console.WriteLine($"{player.Name} uses {equipment.Weapon.Name} against {monster.Name}");
+
+                monster.Health -= equipment.Weapon.Attack;
+
+                Console.WriteLine($"{monster.Name} loses {equipment.Weapon.Attack} health");
+
+                if (monster.Health < 0)
+                {
+                    Console.WriteLine($"{monster.Name} has been slain!");
+                    monsters.Remove(monster);
+                }
+
+                // Only dropping this here as it's part of the instructions to save in the DB.
+                // Monsters technically respawn and the way this application is set up
+                // there isn't a way to track it's original Health.  Instances of the monster
+                // should probably have both a max health and a current health so that they can
+                // be more readily reused.
+
+                // Since this is a service and not a sub-type of a model I felt more comfortable making the database
+                // changes and doing calculations here (ie: business logic) than I would have in the ShoveAbility model.
+
+                // Using the ShoveAbility class for health calculation and saving changes to Room and Monster entities
+                // felt like the opposite of what we've learned in this course.
+                _context.SaveChanges();
+            }
+        }
+        else
+        {
+            Console.WriteLine($"Upon rethinking the whole not having any weapons thing, {player.Name} decides not to proceed with his attack.");
+        }
+
+        Console.WriteLine("\nPress any key to continue...");
+        Console.ReadKey(true);
+
         return ServiceResult.Ok(
-            "[yellow]Attack (TODO)[/]",
-            "[yellow]TODO: Implement attack logic - students will complete this feature.[/]");
+            "[yellow]Attack (DONE)[/]",
+            "[yellow]DONE: Implement attack logic - students will complete this feature.[/]");
         // Students will implement this
     }
 
     /// <summary>
-    /// TODO: Implement ability usage logic
+    /// TODO: Implement ability usage logic [x]
     /// </summary>
-    public ServiceResult UseAbilityOnMonster()
+    public ServiceResult UseAbilityOnMonster(Player player, ICollection<Monster> monsters)
     {
-        _logger.LogInformation("Use ability feature called (not yet implemented)");
+        if (player.Abilities.Count() > 0)
+        {
+            foreach (Ability ability in player.Abilities)
+            {
+                Console.WriteLine($"{ability.Id}.) Use {ability.Name}");
+            }
+
+            var response = Console.ReadLine();
+
+            int responseId = 0;
+            int.TryParse(response, out responseId);
+
+            var chosenAbility = player.Abilities.Where(ability => ability.Id.Equals(responseId)).FirstOrDefault();
+
+            // Use ability on each monster in the room
+            foreach (Monster monster in monsters)
+            {
+                // I won't be refactoring but I think this abstraction went too far, any ability could just do 0 damage.
+                // There was no need for a ShoveAbility class and this seems like a poor way to handle abilities.
+                if (chosenAbility is ShoveAbility ability)
+                {
+                    Console.WriteLine($"{player.Name} uses {ability.Name} against {monster.Name}");
+
+                    monster.Health -= ability.Damage;
+
+                    Console.WriteLine($"{monster.Name} loses {ability.Damage} health.");
+
+                    if (monster.Health < 0)
+                    {
+                        Console.WriteLine($"{monster.Name} has been slain!");
+                        monsters.Remove(monster);
+                    }
+
+                    // Justification on why health calculation and database changes occurred in the service
+                    // can be found in the AttackMonster method and within the ShoveAbility model.
+
+                    // It just wasn't the right place to do what was asked. (ie: business logic)
+                    _context.SaveChanges();
+                }
+                else
+                {
+                    Console.WriteLine($"{player.Name} uses {chosenAbility.Name} against {monster.Name}");
+                    Console.WriteLine("It has no effect.");
+                }
+            }
+        }
+        else
+        {
+            Console.WriteLine("We're sorry but you have no skills.");
+        }
+
+        Console.WriteLine("\nPress any key to continue...");
+        Console.ReadKey(true);
+
         return ServiceResult.Ok(
-            "[yellow]Ability (TODO)[/]",
-            "[yellow]TODO: Implement ability usage - students will complete this feature.[/]");
-        // Students will implement this
+            "[yellow]Ability (DONE)[/]",
+            "[yellow]DONE: Implement ability usage - students will complete this feature.[/]");
     }
 }
