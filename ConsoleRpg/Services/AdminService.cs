@@ -275,23 +275,66 @@ public class AdminService
     /// <summary>
     /// TODO: Implement this method
     /// Requirements:
-    /// - Prompt the user to select a character (by ID or name)
-    /// - Retrieve the character and their abilities from the database (use Include or lazy loading)
-    /// - Display the character's name and basic info
-    /// - Display all abilities associated with that character in a formatted table
-    /// - For each ability, show: Name, Description, and any other relevant properties (e.g., Damage, Distance for ShoveAbility)
-    /// - Handle the case where the character has no abilities
-    /// - Log the operation
+    /// - Prompt the user to select a character (by ID or name) [x]
+    /// - Retrieve the character and their abilities from the database (use Include or lazy loading) [x]
+    /// - Display the character's name and basic info [x]
+    /// - Display all abilities associated with that character in a formatted table [x]
+    /// - For each ability, show: Name, Description, and any other relevant properties (e.g., Damage, Distance for ShoveAbility) [x]
+    /// - Handle the case where the character has no abilities [x]
+    /// - Log the operation [x]
     /// </summary>
     public void DisplayCharacterAbilities()
     {
         _logger.LogInformation("User selected Display Character Abilities");
-        AnsiConsole.MarkupLine("[yellow]=== Display Character Abilities ===[/]");
+        AnsiConsole.MarkupLine("[yellow]=== Enter a character's ID or search by entering a name: ===[/]");
 
-        // TODO: Implement this method
-        AnsiConsole.MarkupLine("[red]This feature is not yet implemented.[/]");
-        AnsiConsole.MarkupLine("[yellow]TODO: Display all abilities for a selected character.[/]");
+        var response = Console.ReadLine();
 
+        int responseId = 0;
+        int.TryParse(response, out responseId);
+
+        var player = _context.Players.Where(player => player.Name.Equals(response) || player.Id.Equals(responseId)).Include(player => player.Abilities).FirstOrDefault();
+
+        if (player is Player foundPlayer)
+        {
+            if (player.Abilities.Count() > 0)
+            {
+                // Display a table if character has abilities
+                AnsiConsole.MarkupLine($"[yellow]=== {player.Abilities.ToList().Count()} abilities held by {player.Name} ({player.Id}) ===[/]");
+
+                var table = new Table();
+
+                table.AddColumn("Name");
+                table.AddColumn("Description");
+                table.AddColumn("Type");
+                table.AddColumn("Damage");
+                table.AddColumn("Distance");
+
+                foreach (var ability in player.Abilities)
+                {
+                    table.AddRow(
+                        ability.Id.ToString() ?? "N/A",
+                        ability.Name ?? "N/A",
+                        ability.Description ?? "N/A",
+                        ability is ShoveAbility shoveAbilityDamage ? shoveAbilityDamage.Damage.ToString() : "N/A",
+                        ability is ShoveAbility shoveAbilityDistance ? shoveAbilityDistance.Damage.ToString() : "N/A"
+                    );
+                }
+
+                AnsiConsole.Write(table);
+            }
+            else
+            {
+                AnsiConsole.MarkupLine($"[yellow]==={player.Name} ({player.Id}) has not been granted any abilities. ===[/]");
+            }
+
+            _logger.LogInformation($"User searched abilities for {player.Name} (ID: {player.Id}) and found {player.Abilities.Count()} results.");
+        }
+        else
+        {
+            AnsiConsole.MarkupLine($"[red]=== No player found with an ID or name matching {response} ===[/]");
+            _logger.LogInformation($"User searched abilities with player search term: `{response}` and no players were found.");
+        }
         PressAnyKey();
     }
 
