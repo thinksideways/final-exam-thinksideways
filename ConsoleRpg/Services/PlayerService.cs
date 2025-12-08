@@ -152,11 +152,20 @@ public class PlayerService
                 {
                     Console.WriteLine($"{monster.Name} has been slain!");
                     monsters.Remove(monster);
-                    /// I opted not to perform any database operations (ie: leaving a monster dead in the database) in this method
-                    /// so that subsequent runs would always have monsters for the sake of grading (I didn't want my testing to make it appear disfunctional later).
-                    /// If I were performing database operations I probably would have passed the entire
-                    /// Room model in so that I could just run a full on _context.SaveChanges();
                 }
+
+                // Only dropping this here as it's part of the instructions to save in the DB.
+                // Monsters technically respawn and the way this application is set up
+                // there isn't a way to track it's original Health.  Instances of the monster
+                // should probably have both a max health and a current health so that they can
+                // be more readily reused.
+
+                // Since this is a service and not a sub-type of a model I felt more comfortable making the database
+                // changes and doing calculations here (ie: business logic) than I would have in the ShoveAbility model.
+
+                // Using the ShoveAbility class for health calculation and saving changes to Room and Monster entities
+                // felt like the opposite of what we've learned in this course.
+                _context.SaveChanges();
             }
         }
         else
@@ -168,8 +177,8 @@ public class PlayerService
         Console.ReadKey(true);
 
         return ServiceResult.Ok(
-            "[yellow]Attack (TODO)[/]",
-            "[yellow]TODO: Implement attack logic - students will complete this feature.[/]");
+            "[yellow]Attack (DONE)[/]",
+            "[yellow]DONE: Implement attack logic - students will complete this feature.[/]");
         // Students will implement this
     }
 
@@ -209,11 +218,13 @@ public class PlayerService
                     {
                         Console.WriteLine($"{monster.Name} has been slain!");
                         monsters.Remove(monster);
-                        /// I opted not to perform any database operations (ie: leaving a monster dead in the database) in this method 
-                        /// so that subsequent runs would always have monsters for the sake of grading.
-                        /// If I were performing database operations I would probably have passed the entire
-                        /// Room model in so that I was updating monsters on a specific Room model's instance.
                     }
+
+                    // Justification on why health calculation and database changes occurred in the service
+                    // can be found in the AttackMonster method and within the ShoveAbility model.
+
+                    // It just wasn't the right place to do what was asked. (ie: business logic)
+                    _context.SaveChanges();
                 }
                 else
                 {
@@ -231,7 +242,7 @@ public class PlayerService
         Console.ReadKey(true);
 
         return ServiceResult.Ok(
-            "[yellow]Ability (TODO)[/]",
-            "[yellow]TODO: Implement ability usage - students will complete this feature.[/]");
+            "[yellow]Ability (DONE)[/]",
+            "[yellow]DONE: Implement ability usage - students will complete this feature.[/]");
     }
 }
