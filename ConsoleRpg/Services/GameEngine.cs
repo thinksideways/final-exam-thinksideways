@@ -67,6 +67,7 @@ public class GameEngine
             .Include(p => p.Room)
             .Include(p => p.Equipment)
             .Include(p => p.Abilities)
+            .Where(p => p.Id.Equals(2))
             .FirstOrDefault();
 
         if (_currentPlayer == null)
