@@ -1,5 +1,6 @@
 using ConsoleRpgEntities.Data;
 using ConsoleRpgEntities.Models.Characters;
+using ConsoleRpgEntities.Models.Abilities.PlayerAbilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
@@ -217,23 +218,56 @@ public class AdminService
     /// <summary>
     /// TODO: Implement this method
     /// Requirements:
-    /// - Display a list of existing characters
-    /// - Prompt user to select a character (by ID)
-    /// - Display a list of available abilities from the database
-    /// - Prompt user to select an ability to add
-    /// - Associate the ability with the character using the many-to-many relationship
-    /// - Save changes to the database
-    /// - Display confirmation message with the character name and ability name
-    /// - Log the operation
+    /// - Display a list of existing characters [x]
+    /// - Prompt user to select a character (by ID) [x]
+    /// - Display a list of available abilities from the database [x]
+    /// - Prompt user to select an ability to add [x]
+    /// - Associate the ability with the character using the many-to-many relationship [x]
+    /// - Save changes to the database [x]
+    /// - Display confirmation message with the character name and ability name [x]
+    /// - Log the operation [x]
     /// </summary>
     public void AddAbilityToCharacter()
     {
         _logger.LogInformation("User selected Add Ability to Character");
         AnsiConsole.MarkupLine("[yellow]=== Add Ability to Character ===[/]");
 
-        // TODO: Implement this method
-        AnsiConsole.MarkupLine("[red]This feature is not yet implemented.[/]");
-        AnsiConsole.MarkupLine("[yellow]TODO: Allow users to add abilities to existing characters.[/]");
+        // Display list of existing characters and prompt for ID:
+        var players = _context.Players.Select(player => player);
+
+        foreach (Player player in players.ToList())
+        {
+            Console.WriteLine($"Id: {player.Id}");
+            Console.WriteLine($"name: {player.Name}");
+        }
+
+        Console.WriteLine("Enter player ID: ");
+        var playerId = Convert.ToInt32(Console.ReadLine());
+
+        var selectedPlayer = players.Where(player => player.Id.Equals(playerId)).FirstOrDefault();
+
+        // Display list of existing abilities and prompt for ID:
+        var abilities = _context.Abilities.Select(ability => ability);
+
+        foreach (Ability ability in abilities.ToList())
+        {
+            Console.WriteLine($"Id: {ability.Id}");
+            Console.WriteLine($"name: {ability.Name}");
+            Console.WriteLine($"Description: {ability.AbilityType}");
+        }
+
+        Console.WriteLine($"Enter an ability ID for {selectedPlayer.Name}");
+        var abilityId = Convert.ToInt32(Console.ReadLine());
+
+        var selectedAbility = _context.Abilities.Where(ability => ability.Id.Equals(abilityId)).FirstOrDefault();
+
+        // Update the selected player's list of abilities:
+        selectedPlayer.Abilities.Add(selectedAbility);
+        _context.SaveChanges();
+
+        // Confirm and log.
+        Console.WriteLine($"Player {selectedPlayer.Name} has been granted the ability: {selectedAbility.Name}");
+        _logger.LogInformation($"Player {selectedPlayer.Name} (Player Id: {selectedPlayer.Id}) has been granted the ability: {selectedAbility.Name} (Ability Id: {selectedAbility.Id})");
 
         PressAnyKey();
     }
