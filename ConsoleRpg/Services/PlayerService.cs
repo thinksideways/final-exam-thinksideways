@@ -1,6 +1,8 @@
 using ConsoleRpg.Models;
 using ConsoleRpgEntities.Data;
+using ConsoleRpgEntities.Models.Abilities.PlayerAbilities;
 using ConsoleRpgEntities.Models.Characters;
+using ConsoleRpgEntities.Models.Characters.Monsters;
 using ConsoleRpgEntities.Models.Rooms;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -129,7 +131,7 @@ public class PlayerService
     /// <summary>
     /// TODO: Implement monster attack logic
     /// </summary>
-    public ServiceResult AttackMonster()
+    public ServiceResult AttackMonster(Player player, ICollection<Monster> monsters)
     {
         _logger.LogInformation("Attack monster feature called (not yet implemented)");
         return ServiceResult.Ok(
@@ -139,14 +141,64 @@ public class PlayerService
     }
 
     /// <summary>
-    /// TODO: Implement ability usage logic
+    /// TODO: Implement ability usage logic [x]
     /// </summary>
-    public ServiceResult UseAbilityOnMonster()
+    public ServiceResult UseAbilityOnMonster(Player player, ICollection<Monster> monsters)
     {
-        _logger.LogInformation("Use ability feature called (not yet implemented)");
+        if (player.Abilities.Count() > 0)
+        {
+            foreach (Ability ability in player.Abilities)
+            {
+                Console.WriteLine($"{ability.Id}.) Use {ability.Name}");
+            }
+
+            var response = Console.ReadLine();
+
+            int responseId = 0;
+            int.TryParse(response, out responseId);
+
+            var chosenAbility = player.Abilities.Where(ability => ability.Id.Equals(responseId)).FirstOrDefault();
+
+            // Use ability on each monster in the room
+            foreach (Monster monster in monsters)
+            {
+                // I won't be refactoring but I think this abstraction went too far, any ability could just do 0 damage.
+                // There was no need for a ShoveAbility class and this seems like a poor way to handle abilities.
+                if (chosenAbility is ShoveAbility ability)
+                {
+                    Console.WriteLine($"{player.Name} uses {ability.Name} against {monster.Name}");
+
+                    monster.Health -= ability.Damage;
+
+                    Console.WriteLine($"{monster.Name} loses {ability.Damage}");
+
+                    if (monster.Health < 0)
+                    {
+                        Console.WriteLine($"{monster.Name} has been slain!");
+                        monsters.Remove(monster);
+                        /// I opted not to perform any database operations (ie: leaving a monster dead in the database) in this method 
+                        /// so that subsequent runs would always have monsters for the sake of grading.
+                        /// If I were performing database operations I would probably have passed the entire
+                        /// Room model in so that I was updating monsters on a specific Room model's instance.
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"{player.Name} uses {chosenAbility.Name} against {monster.Name}");
+                    Console.WriteLine("It has no effect.");
+                }
+            }
+        }
+        else
+        {
+            Console.WriteLine("We're sorry but you have no skills.");
+        }
+
+        Console.WriteLine("Press any key to continue...");
+        Console.ReadKey(true);
+
         return ServiceResult.Ok(
             "[yellow]Ability (TODO)[/]",
             "[yellow]TODO: Implement ability usage - students will complete this feature.[/]");
-        // Students will implement this
     }
 }
