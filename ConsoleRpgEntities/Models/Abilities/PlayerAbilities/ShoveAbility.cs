@@ -29,8 +29,6 @@ namespace ConsoleRpgEntities.Models.Abilities.PlayerAbilities
 
             // In a more advanced application maybe this file was necessary but in the real world
             // my suggestion would have been to remove it from the equation.
-
-            // When damage is the only thing that matters, this class is not KISS it's DUMB.  Doing unnecessarily moronic business.
             Console.WriteLine($"{user.Name} shoves {target.Name} back {Distance} feet, dealing {Damage} damage!");
         }
     }

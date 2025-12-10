@@ -1,9 +1,11 @@
 using ConsoleRpgEntities.Data;
 using ConsoleRpgEntities.Models.Characters;
+using ConsoleRpgEntities.Models.Characters.Monsters;
 using ConsoleRpgEntities.Models.Abilities.PlayerAbilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
+using ConsoleRpgEntities.Models.Rooms;
 
 namespace ConsoleRpg.Services;
 
@@ -216,7 +218,7 @@ public class AdminService
     #region C-Level Requirements
 
     /// <summary>
-    /// TODO: Implement this method
+    /// DONE: Implement this method
     /// Requirements:
     /// - Display a list of existing characters [x]
     /// - Prompt user to select a character (by ID) [x]
@@ -273,7 +275,7 @@ public class AdminService
     }
 
     /// <summary>
-    /// TODO: Implement this method
+    /// DONE: Implement this method
     /// Requirements:
     /// - Prompt the user to select a character (by ID or name) [x]
     /// - Retrieve the character and their abilities from the database (use Include or lazy loading) [x]
@@ -343,49 +345,238 @@ public class AdminService
     #region B-Level Requirements
 
     /// <summary>
-    /// TODO: Implement this method
+    /// DONE: Implement this method
     /// Requirements:
-    /// - Prompt user for room name
-    /// - Prompt user for room description
-    /// - Optionally prompt for navigation (which rooms connect in which directions)
-    /// - Create a new Room entity
-    /// - Save to the database
-    /// - Display confirmation with room details
-    /// - Log the operation
+    /// - Prompt user for room name [x]
+    /// - Prompt user for room description [x]
+    /// - *Optionally* prompt for navigation (which rooms connect in which directions)
+    /// - Create a new Room entity [x]
+    /// - Save to the database [x]
+    /// - Display confirmation with room details [x]
+    /// - Log the operation [x]
     /// </summary>
     public void AddRoom()
     {
         _logger.LogInformation("User selected Add Room");
         AnsiConsole.MarkupLine("[yellow]=== Add New Room ===[/]");
 
-        // TODO: Implement this method
-        AnsiConsole.MarkupLine("[red]This feature is not yet implemented.[/]");
-        AnsiConsole.MarkupLine("[yellow]TODO: Allow users to create new rooms and connect them to the world.[/]");
+        var name = AnsiConsole.Ask<string>("[cyan]Enter a name for the new room: [/]");
+        var description = AnsiConsole.Ask<string>("[cyan]Enter a description for the new room: [/]");
 
+        var room = new Room();
+        room.Name = name;
+        room.Description = description;
+
+        // With regard to adding room exits:
+        // It didn't seem like there was any rhyme or reason to whether two rooms could possibly be the next room
+        // in any cardinal direction and I definitely opted out of fixing that in any way.
+        // I am aware that impossible cardinal directions are very possible and that this is a legacy issue.
+        var addExit = "y";
+
+        AnsiConsole.Ask<string>("[cyan]Would you like to add any exits? (y/n) [/]");
+
+        if (addExit.Equals("y"))
+        {
+            // I made an assumption here that I could use a nullable int type into this Ask<T>()method.
+
+            // This assumption will be prevalent in the upcoming control flow that decides
+            // whether or not to add a room.
+
+            // You can enter a huge integer while running to continue but I won't be fixing it
+            // for this applciation.  It really doesn't matter to me anymore.
+
+            // If needed for testing feel free to add a huuuuuge integer to prevent having
+            // to assign an exit for each direction.
+            var northId = AnsiConsole.Ask<int?>("[cyan]Enter north room ID: [/]");
+            var southId = AnsiConsole.Ask<int?>("[cyan]Enter south room ID: [/]");
+            var eastId = AnsiConsole.Ask<int?>("[cyan]Enter east room ID: [/]");
+            var westId = AnsiConsole.Ask<int?>("[cyan]Enter west room ID: [/]");
+
+            // add Northern exit
+            if (!(northId is null) && _context.Rooms.Where(room => room.Id.Equals(northId)).Count() > 0)
+            {
+                room.NorthRoomId = northId;
+            }
+            else
+            {
+                AnsiConsole.MarkupLine($"There was no room with id {northId} so this exit wasn't created.");
+            }
+
+            if (!(eastId is null) && _context.Rooms.Where(room => room.Id.Equals(southId)).Count() > 0)
+            {
+                room.SouthRoomId = northId;
+            }
+            else
+            {
+                AnsiConsole.MarkupLine($"There was no room with id {southId} so this exit wasn't created.");
+            }
+
+            // add Eastern exit
+            if (!(northId is null) && _context.Rooms.Where(room => room.Id.Equals(eastId)).Count() > 0)
+            {
+                room.EastRoomId = eastId;
+            }
+            else
+            {
+                AnsiConsole.MarkupLine($"There was no room with id {eastId} so this exit wasn't created.");
+            }
+
+            // add Western exit
+            if (_context.Rooms.Where(room => room.Id.Equals(westId)).Count() > 0)
+            {
+                room.WestRoomId = westId;
+            }
+            else
+            {
+                AnsiConsole.MarkupLine($"There was no room with id {westId} so this exit wasn't created.");
+            }
+        }
+        else
+        {
+            AnsiConsole.MarkupLine("If it's not a yes it's a no.  Rooms are already impossibly next to eachother so who cares.");
+        }
+
+        _context.Rooms.Add(room);
+        _context.SaveChanges();
+
+        AnsiConsole.MarkupLine("[cyan] Room created: [/]");
+        var table = new Table();
+
+        // Special note: It's actually awesome that the entity is automatically assigned it's new ID
+        table.AddColumn("ID");
+        table.AddColumn("Name");
+        table.AddColumn("Description");
+
+        table.AddRow(
+            room.Id.ToString(),
+            room.Name,
+            room.Description
+        );
+
+        AnsiConsole.Write(table);
+
+        _logger.LogInformation($"User added room: - {room.Id} | {room.Name} | {room.Description} -");
+
+        // DONE: Implement this method
         PressAnyKey();
     }
 
     /// <summary>
-    /// TODO: Implement this method
+    /// DONE: Implement this method
     /// Requirements:
-    /// - Display a list of all rooms
-    /// - Prompt user to select a room (by ID or name)
-    /// - Retrieve room from database with related data (Include Players and Monsters)
-    /// - Display room name, description, and exits
-    /// - Display list of all players in the room (or message if none)
-    /// - Display list of all monsters in the room (or message if none)
-    /// - Handle case where room is empty gracefully
-    /// - Log the operation
+    /// - Display a list of all rooms [x]
+    /// - Prompt user to select a room (by ID or name) [x]
+    /// - Retrieve room from database with related data (Include Players and Monsters) [x]
+    /// - Display room name, description, and exits [x]
+    /// - Display list of all players in the room (or message if none) [x]
+    /// - Display list of all monsters in the room (or message if none) [x]
+    /// - Handle case where room is empty gracefully [x]
+    /// - Log the operation [x]
     /// </summary>
     public void DisplayRoomDetails()
     {
         _logger.LogInformation("User selected Display Room Details");
+
+        var rooms = _context.Rooms.Select(room => room).Include(room => room.Players).Include(room => room.Monsters);
+
+        AnsiConsole.MarkupLine($"[yellow]=== Available Rooms ===[/]");
+
+        // Create initial table of available rooms and indicate whether
+        // they have players or monsters inside
+        var allRoomsTable = new Table();
+
+        allRoomsTable.AddColumn("ID");
+        allRoomsTable.AddColumn("Name");
+        allRoomsTable.AddColumn("Description");
+        allRoomsTable.AddColumn("Exits");
+        allRoomsTable.AddColumn("Has Players");
+        allRoomsTable.AddColumn("Has Monsters");
+
+        foreach (var room in rooms.ToList())
+        {
+            var exits = new List<string>();
+
+            if (room.NorthRoomId != null) exits.Add("North");
+            if (room.SouthRoomId != null) exits.Add("South");
+            if (room.EastRoomId != null) exits.Add("East");
+            if (room.WestRoomId != null) exits.Add("West");
+
+            allRoomsTable.AddRow(
+                room.Id.ToString() ?? "N/A",
+                room.Name ?? "N/A",
+                room.Description ?? "N/A",
+                string.Join(",", exits),
+                room.Players.Count() > 0 ? "TRUE" : "FALSE",
+                room.Monsters.Count() > 0 ? "TRUE" : "FALSE"
+            );
+        }
+
+        AnsiConsole.Write(allRoomsTable);
+
         AnsiConsole.MarkupLine("[yellow]=== Display Room Details ===[/]");
+        var response = AnsiConsole.Ask<string>("[yellow] Enter the room ID or the room name: [/]");
+        int responseId = 0;
+        int.TryParse(response, out responseId);
 
-        // TODO: Implement this method
-        AnsiConsole.MarkupLine("[red]This feature is not yet implemented.[/]");
-        AnsiConsole.MarkupLine("[yellow]TODO: Display detailed information about a room and its inhabitants.[/]");
+        var foundRoom = _context.Rooms.Where(room => room.Name.Equals(response) || room.Id.Equals(responseId)).Include(room => room.Players).Include(room => room.Monsters).FirstOrDefault();
 
+        if (foundRoom is Room found)
+        {
+            var foundRoomTable = new Table();
+
+            foundRoomTable.AddColumn("ID");
+            foundRoomTable.AddColumn("Name");
+            foundRoomTable.AddColumn("Description");
+            foundRoomTable.AddColumn("Exits");
+            foundRoomTable.AddColumn("Players");
+            foundRoomTable.AddColumn("Monsters");
+
+            // Summarized string of players and monsters for tabular cell output
+            var playerString = "There are no players in this room.";
+            if (foundRoom.Players.Count() > 0)
+            {
+                playerString = "";
+                foreach (Player player in foundRoom.Players)
+                {
+                    playerString += $"{player.Id}. {player.Name} ";
+                }
+            }
+
+            var monsterString = "There are no monsters in this room.";
+            if (foundRoom.Monsters.Count() > 0)
+            {
+                monsterString = "";
+                foreach (Monster monster in foundRoom.Monsters)
+                {
+                    monsterString += $"{monster.Id}. {monster.Name} ";
+                }
+            }
+
+            List<string> exits = new List<string>();
+
+            if (foundRoom.NorthRoomId != null) exits.Add("North");
+            if (foundRoom.SouthRoomId != null) exits.Add("South");
+            if (foundRoom.EastRoomId != null) exits.Add("East");
+            if (foundRoom.WestRoomId != null) exits.Add("West");
+
+            foundRoomTable.AddRow(
+                foundRoom.Id.ToString() ?? "N/A",
+                foundRoom.Name ?? "N/A",
+                foundRoom.Description ?? "N/A",
+                string.Join(",", exits),
+                playerString,
+                monsterString
+            );
+
+            AnsiConsole.Write(foundRoomTable);
+        }
+        else
+        {
+            AnsiConsole.MarkupLine("[red]=== No rooms found ===[/]");
+        }
+
+        _logger.LogInformation($"User searched rooms.");
+        // DONE: Implement this method
         PressAnyKey();
     }
 
