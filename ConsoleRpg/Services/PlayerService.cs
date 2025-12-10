@@ -179,7 +179,6 @@ public class PlayerService
         return ServiceResult.Ok(
             "[yellow]Attack (DONE)[/]",
             "[yellow]DONE: Implement attack logic - students will complete this feature.[/]");
-        // Students will implement this
     }
 
     /// <summary>
